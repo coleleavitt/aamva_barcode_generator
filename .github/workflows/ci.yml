@@ -11,18 +11,24 @@ env:
   RUSTFLAGS: "-D warnings"
 
 jobs:
-  security_audit:
-    name: Security Audit
+  security_check:
+    name: Security Check
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
     steps:
       - uses: actions/checkout@v4
-      - uses: actions-rs/audit-check@v1
+
+      - name: Run cargo-deny
+        uses: EmbarkStudios/cargo-deny-action@v1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          arguments: --all-features
+          command: check advisories
 
   build_and_test:
     name: Build and Test
-    needs: security_audit
+    needs: security_check
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -36,9 +42,6 @@ jobs:
         with:
           toolchain: ${{ matrix.toolchain }}
           components: clippy, rustfmt
-
-      - name: Run cargo-deny
-        uses: EmbarkStudios/cargo-deny-action@v1
 
       - name: Cache Dependencies
         uses: actions/cache@v3
