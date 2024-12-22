@@ -3,8 +3,7 @@ use std::collections::HashMap;
 use std::fs::File;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let aamva_data = format!(
-        "@\n\
+    let aamva_data = "@\n\
         ANSI 636014090102DL00410262ZC00240024\n\
         DL\n\
         DAQY6297168\n\
@@ -35,8 +34,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ZCAGRN\n\
         ZCBBRN\n\
         ZCC\n\
-        ZCD\n"
-    );
+        ZCD\n".to_string();
 
     let mut hints = HashMap::new();
     hints.insert(
@@ -52,7 +50,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         EncodeHintValue::Margin("10".to_string()),
     );
 
-    let writer = MultiFormatWriter::default();
+    let writer = MultiFormatWriter;
     let matrix =
         writer.encode_with_hints(&aamva_data, &BarcodeFormat::PDF_417, 400, 200, &hints)?;
 
@@ -69,7 +67,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let mut file = File::create("aamva_barcode.png")?;
-    let mut encoder = png::Encoder::new(&mut file, matrix.width() as u32, matrix.height() as u32);
+    let mut encoder = png::Encoder::new(&mut file, matrix.width(), matrix.height());
     encoder.set_color(png::ColorType::Rgb);
     encoder.set_depth(png::BitDepth::Eight);
     let mut writer = encoder.write_header()?;
