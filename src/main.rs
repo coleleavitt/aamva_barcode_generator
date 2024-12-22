@@ -4,37 +4,38 @@ use std::fs::File;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let aamva_data = "@\n\
-        ANSI 636014090102DL00410262ZC00240024\n\
-        DL\n\
-        DAQY6297168\n\
-        DCSHOLLIDAY\n\
-        DDEN\n\
-        DACCLAIRE\n\
-        DDFN\n\
-        DADVIRGINIA\n\
-        DDGN\n\
-        DBD09222022\n\
-        DBB12201995\n\
-        DBA12202026\n\
-        DBC2\n\
-        DAU070 IN\n\
-        DAYGRN\n\
-        DAG15216 S AVALON BLVD\n\
-        DAICOMPTON\n\
-        DAJCA\n\
-        DAK902200000\n\
-        DCF09/22/2022508B4/BBFD/26\n\
-        DCGUSA\n\
-        DAW145\n\
-        DAZBRO\n\
-        DCK22264Y62971680901\n\
-        DDAF\n\
-        DDB08292017\n\
-        ZC\n\
-        ZCAGRN\n\
-        ZCBBRN\n\
-        ZCC\n\
-        ZCD\n".to_string();
+    ANSI 636014090102DL00410262ZC00240024\n\
+    DL\n\
+    DAQY6297168\n\
+    DCSHOLLIDAY\n\
+    DDEN\n\
+    DACCLAIRE\n\
+    DDFN\n\
+    DADVIRGINIA\n\
+    DDGN\n\
+    DBD09222022\n\
+    DBB12201995\n\
+    DBA12202026\n\
+    DBC2\n\
+    DAU070 IN\n\
+    DAYGRN\n\
+    DAG15216 S AVALON BLVD\n\
+    DAICOMPTON\n\
+    DAJCA\n\
+    DAK902200000\n\
+    DCF09/22/2022508B4/BBFD/26\n\
+    DCGUSA\n\
+    DAW145\n\
+    DAZBRO\n\
+    DCK22264Y62971680901\n\
+    DDAF\n\
+    DDB08292017\n\
+    ZC\n\
+    ZCAGRN\n\
+    ZCBBRN\n\
+    ZCC\n\
+    ZCD\n"
+        .to_string();
 
     let mut hints = HashMap::new();
     hints.insert(
