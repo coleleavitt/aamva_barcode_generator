@@ -1,5 +1,15 @@
 [hooks]
-pre-commit = "cargo fmt -- --check && cargo clippy -- -D warnings && cargo test"
+pre-commit = """
+cargo fmt -- --check &&
+cargo clippy -- -D warnings &&
+cargo test &&
+find . -type f -not -path '*/\\.*' -exec file {} \\; | grep 'text' | cut -d: -f1 | xargs -r sed -i 's/[[:space:]]*$//' &&
+git diff --check &&
+find . -name '*.yaml' -o -name '*.yml' -type f -exec yamllint {} + || true
+"""
 
 [logging]
 verbose = true
+
+[hook_settings]
+file_size_limit = "500kb"

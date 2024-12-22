@@ -76,5 +76,3 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
-fn test_hook_function(){println!("bad formatting");}
-
