@@ -4,9 +4,5 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bardecoder = "0.5.0"
-image = "0.25.5"
-pdf417 = "0.2.1"
 png = "0.17.16"
 rxing = "0.6.3"
-#pdf417-hub3-rs = "0.1.0"clea
