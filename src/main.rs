@@ -1,7 +1,4 @@
-use rxing::{
-    BarcodeFormat, EncodeHintType, EncodeHintValue, MultiFormatWriter,
-    Writer,
-};
+use rxing::{BarcodeFormat, EncodeHintType, EncodeHintValue, MultiFormatWriter, Writer};
 use std::collections::HashMap;
 use std::fs::File;
 
@@ -56,13 +53,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     let writer = MultiFormatWriter::default();
-    let matrix = writer.encode_with_hints(
-        &aamva_data,
-        &BarcodeFormat::PDF_417,
-        400,
-        200,
-        &hints,
-    )?;
+    let matrix =
+        writer.encode_with_hints(&aamva_data, &BarcodeFormat::PDF_417, 400, 200, &hints)?;
 
     let mut pixels = Vec::new();
     for y in 0..matrix.height() {
@@ -77,11 +69,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let mut file = File::create("aamva_barcode.png")?;
-    let mut encoder = png::Encoder::new(
-        &mut file,
-        matrix.width() as u32,
-        matrix.height() as u32
-    );
+    let mut encoder = png::Encoder::new(&mut file, matrix.width() as u32, matrix.height() as u32);
     encoder.set_color(png::ColorType::Rgb);
     encoder.set_depth(png::BitDepth::Eight);
     let mut writer = encoder.write_header()?;
