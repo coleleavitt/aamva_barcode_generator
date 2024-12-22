@@ -8,10 +8,21 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  RUSTFLAGS: "-D warnings"
 
 jobs:
+  security_audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/audit-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
   build_and_test:
     name: Build and Test
+    needs: security_audit
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -25,6 +36,9 @@ jobs:
         with:
           toolchain: ${{ matrix.toolchain }}
           components: clippy, rustfmt
+
+      - name: Run cargo-deny
+        uses: EmbarkStudios/cargo-deny-action@v1
 
       - name: Cache Dependencies
         uses: actions/cache@v3
