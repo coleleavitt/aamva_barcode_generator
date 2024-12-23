@@ -5,3 +5,5 @@ Cargo.lock
 *.xml
 *.jpg
 xmls
+layout
+decoded_content.txt
