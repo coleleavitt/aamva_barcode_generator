@@ -1,78 +1,69 @@
-use rxing::{BarcodeFormat, EncodeHintType, EncodeHintValue, MultiFormatWriter, Writer};
-use std::collections::HashMap;
-use std::fs::File;
+mod preprocess;
+mod decode;
+
+use std::io::Write;
+use preprocess::preprocess_image;
+
+use image::{DynamicImage, ImageBuffer};
+use rxing::{
+    BarcodeFormat, EncodeHintType, EncodeHintValue, EncodingHintDictionary
+
+
+    ,
+    MultiFormatWriter,
+    Writer,
+};
+use crate::decode::try_decode_barcode;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let aamva_data = "@\n\
-    ANSI 636014090102DL00410262ZC00240024\n\
-    DL\n\
-    DAQY6297168\n\
-    DCSHOLLIDAY\n\
-    DDEN\n\
-    DACCLAIRE\n\
-    DDFN\n\
-    DADVIRGINIA\n\
-    DDGN\n\
-    DBD09222022\n\
-    DBB12201995\n\
-    DBA12202026\n\
-    DBC2\n\
-    DAU070 IN\n\
-    DAYGRN\n\
-    DAG15216 S AVALON BLVD\n\
-    DAICOMPTON\n\
-    DAJCA\n\
-    DAK902200000\n\
-    DCF09/22/2022508B4/BBFD/26\n\
-    DCGUSA\n\
-    DAW145\n\
-    DAZBRO\n\
-    DCK22264Y62971680901\n\
-    DDAF\n\
-    DDB08292017\n\
-    ZC\n\
-    ZCAGRN\n\
-    ZCBBRN\n\
-    ZCC\n\
-    ZCD\n"
-        .to_string();
+    // Load and preprocess the image
+    let original_image = image::open("imgs/working barcode.png")?;
+    let processed_image = preprocess_image(original_image);
 
-    let mut hints = HashMap::new();
-    hints.insert(
-        EncodeHintType::PDF417_COMPACT,
-        EncodeHintValue::Pdf417Compact(false.to_string()),
-    );
-    hints.insert(
-        EncodeHintType::ERROR_CORRECTION,
-        EncodeHintValue::ErrorCorrection("5".to_string()),
-    );
-    hints.insert(
+    // Save preprocessed image for debugging
+    processed_image.save("preprocessed.png")?;
+
+    // Try to decode the preprocessed image
+    let decoded_result = try_decode_barcode(&processed_image)?;
+
+    println!("Original barcode content: {}", decoded_result);
+
+    let mut output_file = std::fs::File::create("decoded_content.txt")?;
+    output_file.write_all(decoded_result.as_bytes())?;
+
+    // Generate matching barcode
+    let writer = MultiFormatWriter::default();
+    let mut encode_hints = EncodingHintDictionary::new();
+    encode_hints.insert(
         EncodeHintType::MARGIN,
-        EncodeHintValue::Margin("10".to_string()),
+        EncodeHintValue::Margin("1".to_string())
     );
 
-    let writer = MultiFormatWriter;
-    let matrix =
-        writer.encode_with_hints(&aamva_data, &BarcodeFormat::PDF_417, 400, 200, &hints)?;
+    let bit_matrix = writer.encode_with_hints(
+        &decoded_result,
+        &BarcodeFormat::PDF_417,
+        300,
+        150,
+        &encode_hints
+    )?;
 
-    let mut pixels = Vec::new();
-    for y in 0..matrix.height() {
-        for x in 0..matrix.width() {
-            let color = if matrix.get(x, y) {
-                [0u8, 0u8, 0u8]
-            } else {
-                [255u8, 255u8, 255u8]
-            };
-            pixels.extend_from_slice(&color);
-        }
+    // Convert to image with transparency and save
+    let width = bit_matrix.width();
+    let height = bit_matrix.height();
+    let mut img_buffer = ImageBuffer::new(width, height);
+
+    for (x, y) in (0..width).flat_map(|x| (0..height).map(move |y| (x, y))) {
+        let color = if bit_matrix.get(x, y) {
+            image::Rgba([0u8, 0u8, 0u8, 255u8])  // Black, fully opaque
+        } else {
+            image::Rgba([0u8, 0u8, 0u8, 0u8])    // Transparent
+        };
+        img_buffer.put_pixel(x, y, color);
     }
 
-    let mut file = File::create("aamva_barcode.png")?;
-    let mut encoder = png::Encoder::new(&mut file, matrix.width(), matrix.height());
-    encoder.set_color(png::ColorType::Rgb);
-    encoder.set_depth(png::BitDepth::Eight);
-    let mut writer = encoder.write_header()?;
-    writer.write_image_data(&pixels)?;
+    let generated_image = DynamicImage::ImageRgba8(img_buffer);
+    generated_image.save("generated_barcode.png")?;
+
 
     Ok(())
 }

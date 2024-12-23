@@ -6,6 +6,6 @@ edition = "2021"
 [dependencies]
 rxing = "0.6.3"
 png = "0.17.10"
-
-[dev-dependencies]
-rusty-hook = "0.11.2"
+image = "0.25.5"
+quick-xml = "0.37.1"
+imageproc = "0.25.0"
