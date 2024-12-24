@@ -1,91 +1,68 @@
+mod decode;
+mod generate_barcode;
+mod preprocess;
+mod structure;
+use structure::data::DriversLicense;
+
+use crate::generate_barcode::{transparant_background, white_background};
 use rxing::{
-    BarcodeFormat, EncodeHintType, EncodeHintValue, MultiFormatWriter,
+    BarcodeFormat, EncodeHintType, EncodeHintValue, EncodingHintDictionary, MultiFormatWriter,
     Writer,
 };
-use std::collections::HashMap;
-use std::fs::File;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let aamva_data = format!(
-        "@\n\
-        ANSI 636014090102DL00410262ZC00240024\n\
-        DL\n\
-        DAQY6297168\n\
-        DCSHOLLIDAY\n\
-        DDEN\n\
-        DACCLAIRE\n\
-        DDFN\n\
-        DADVIRGINIA\n\
-        DDGN\n\
-        DBD09222022\n\
-        DBB12201995\n\
-        DBA12202026\n\
-        DBC2\n\
-        DAU070 IN\n\
-        DAYGRN\n\
-        DAG15216 S AVALON BLVD\n\
-        DAICOMPTON\n\
-        DAJCA\n\
-        DAK902200000\n\
-        DCF09/22/2022508B4/BBFD/26\n\
-        DCGUSA\n\
-        DAW145\n\
-        DAZBRO\n\
-        DCK22264Y62971680901\n\
-        DDAF\n\
-        DDB08292017\n\
-        ZC\n\
-        ZCAGRN\n\
-        ZCBBRN\n\
-        ZCC\n\
-        ZCD\n"
-    );
+    let license = DriversLicense {
+        drivers_license_number: "D1175907".to_string(),
+        first_name: String::from("Herman").to_uppercase(),
+        last_name: String::from("Huang").to_uppercase(),
+        address: String::from("839 Heaven Ct").to_uppercase(),
+        city: String::from("Hayward").to_uppercase(),
+        state: String::from("CA").to_uppercase(),
+        height: String::from("071 IN"),
+        eye_color: String::from("HAZ"),
+        hair_color: "BRO".to_string(),
+        dob: String::from("12011989"),         // MMDDYYYY
+        issue_date: String::from("06072022"),  // MMDDYYYY
+        expiry_date: String::from("12012027"), // MMDDYYYY
+        postal_code: String::from("945444132  "),
+        alternative_hair_color_encoding: String::from("BRN"),
+        redundant_encoding_eye_color: String::from("HZL"),
+        weight: "220".to_string(),
+        middle_name: "".to_string(),
+        organ_donor: "".to_string(),
+        sex: "1".to_string(),
+        family_name_truncated: "N".to_string(),
+        endorsements: "NONE".to_string(),
+        middle_name_truncated: "N".to_string(),
+        first_name_truncated: "N".to_string(),
+        vehicle_class: "C".to_string(),
+        document_discriminator: "06/07/2022508B4/BBFD/27".to_string(), // {Issue_Date}{Sequence}{Office_Code}/{Security_Code}/{Version AKA exp date year without century}
+        inventory_control_number: "22157D11759070901".to_string(),
+    };
 
-    let mut hints = HashMap::new();
-    hints.insert(
-        EncodeHintType::PDF417_COMPACT,
-        EncodeHintValue::Pdf417Compact(false.to_string()),
-    );
-    hints.insert(
-        EncodeHintType::ERROR_CORRECTION,
-        EncodeHintValue::ErrorCorrection("5".to_string()),
-    );
-    hints.insert(
+    let decoded_result = license.to_aamva_string();
+    println!("Original barcode content: {}", decoded_result);
+
+    let writer = MultiFormatWriter;
+    let mut encode_hints = EncodingHintDictionary::new();
+    encode_hints.insert(
         EncodeHintType::MARGIN,
-        EncodeHintValue::Margin("10".to_string()),
+        EncodeHintValue::Margin("1".to_string()),
     );
 
-    let writer = MultiFormatWriter::default();
-    let matrix = writer.encode_with_hints(
-        &aamva_data,
+    let bit_matrix = writer.encode_with_hints(
+        &decoded_result,
         &BarcodeFormat::PDF_417,
-        400,
-        200,
-        &hints,
+        1230, // Changed from 300 to 1230
+        323,  // Changed from 150 to 323
+        &encode_hints,
     )?;
 
-    let mut pixels = Vec::new();
-    for y in 0..matrix.height() {
-        for x in 0..matrix.width() {
-            let color = if matrix.get(x, y) {
-                [0u8, 0u8, 0u8]
-            } else {
-                [255u8, 255u8, 255u8]
-            };
-            pixels.extend_from_slice(&color);
-        }
-    }
+    let width = bit_matrix.width();
+    let height = bit_matrix.height();
 
-    let mut file = File::create("aamva_barcode.png")?;
-    let mut encoder = png::Encoder::new(
-        &mut file,
-        matrix.width() as u32,
-        matrix.height() as u32
-    );
-    encoder.set_color(png::ColorType::Rgb);
-    encoder.set_depth(png::BitDepth::Eight);
-    let mut writer = encoder.write_header()?;
-    writer.write_image_data(&pixels)?;
+    transparant_background(&bit_matrix, width, height);
+    white_background(&bit_matrix, width, height);
 
     Ok(())
 }

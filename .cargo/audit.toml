@@ -1,0 +1,7 @@
+[advisories]
+ignore = []
+severity-threshold = "low"
+
+[output]
+format = "terminal"
+quiet = false

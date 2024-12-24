@@ -1,4 +1,9 @@
 /target
 .idea/
 Cargo.lock
-.gitignore
+*.png
+*.xml
+*.jpg
+xmls
+layout
+decoded_content.txt

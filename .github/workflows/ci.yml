@@ -2,20 +2,45 @@ name: Rust CI Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [ '*' ]
   pull_request:
-    branches: [ main ]
+    branches: [ '*' ]
 
 env:
   CARGO_TERM_COLOR: always
+  RUSTFLAGS: "-D warnings"
+  CARGO_INCREMENTAL: 0
 
 jobs:
+  security_check:
+    name: Security Check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Security Tools
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/bin
+          key: ${{ runner.os }}-security-tools-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Run cargo-deny
+        uses: EmbarkStudios/cargo-deny-action@v1
+        with:
+          arguments: --all-features
+          command: check advisories
+
   build_and_test:
     name: Build and Test
+    needs: security_check
     runs-on: ubuntu-latest
     strategy:
       matrix:
         toolchain: [stable, beta]
+      fail-fast: false
 
     steps:
       - uses: actions/checkout@v4
@@ -25,27 +50,37 @@ jobs:
         with:
           toolchain: ${{ matrix.toolchain }}
           components: clippy, rustfmt
+          profile: minimal
 
-      - name: Cache Dependencies
+      - name: Cache Rust Dependencies
         uses: actions/cache@v3
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            ~/.rustup
+          key: ${{ runner.os }}-rust-${{ matrix.toolchain }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-rust-${{ matrix.toolchain }}-
+
+      - name: Format Code
+        run: cargo fmt
 
       - name: Check Format
         run: cargo fmt -- --check
 
       - name: Clippy Check
-        run: cargo clippy -- -D warnings
+        run: cargo clippy --all-targets --all-features -- -D warnings
 
       - name: Build
-        run: cargo build --verbose
+        run: cargo build --verbose --all-features
 
       - name: Run Tests
-        run: cargo test --verbose
+        run: cargo test --verbose --all-features
+
+      - name: Generate Documentation
+        run: cargo doc --no-deps --all-features
 
       - name: Generate Barcode
         run: cargo run
@@ -54,4 +89,39 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: barcode-${{ matrix.toolchain }}
-          path: aamva_barcode.png
+          path: |
+            barcode_transparent.png
+            barcode_white.png
+          if-no-files-found: error
+
+      - name: Upload Documentation
+        uses: actions/upload-artifact@v3
+        with:
+          name: documentation-${{ matrix.toolchain }}
+          path: target/doc
+          if-no-files-found: warn
+
+  release:
+    name: Create Release
+    needs: build_and_test
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: barcode-stable
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            barcode_transparent.png
+            barcode_white.png
+          draft: false
+          prerelease: false
+          generate_release_notes: true

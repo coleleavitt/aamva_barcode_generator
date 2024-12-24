@@ -4,5 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-png = "0.17.16"
 rxing = "0.6.3"
+png = "0.17.10"
+image = "0.25.5"
+quick-xml = "0.37.1"
+imageproc = "0.25.0"
