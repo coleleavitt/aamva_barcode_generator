@@ -4,8 +4,6 @@ mod generate_barcode;
 mod structure;
 use structure::data::DriversLicense;
 
-use std::io::Write;
-
 use crate::generate_barcode::{transparant_background, white_background};
 use rxing::{
     BarcodeFormat, EncodeHintType, EncodeHintValue, EncodingHintDictionary,
@@ -48,7 +46,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Original barcode content: {}", decoded_result);
 
 
-    let writer = MultiFormatWriter::default();
+    let writer = MultiFormatWriter;
     let mut encode_hints = EncodingHintDictionary::new();
     encode_hints.insert(
         EncodeHintType::MARGIN,
