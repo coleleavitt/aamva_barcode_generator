@@ -9,6 +9,7 @@ on:
 env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: "-D warnings"
+  CARGO_INCREMENTAL: 0
 
 jobs:
   security_check:
@@ -39,6 +40,7 @@ jobs:
     strategy:
       matrix:
         toolchain: [stable, beta]
+      fail-fast: false
 
     steps:
       - uses: actions/checkout@v4
@@ -48,6 +50,7 @@ jobs:
         with:
           toolchain: ${{ matrix.toolchain }}
           components: clippy, rustfmt
+          profile: minimal
 
       - name: Cache Rust Dependencies
         uses: actions/cache@v3
@@ -56,21 +59,28 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             target
+            ~/.rustup
           key: ${{ runner.os }}-rust-${{ matrix.toolchain }}-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-rust-${{ matrix.toolchain }}-
 
+      - name: Format Code
+        run: cargo fmt
+
       - name: Check Format
-        run: cargo fmt --check
+        run: cargo fmt -- --check
 
       - name: Clippy Check
-        run: cargo clippy -- -D warnings
+        run: cargo clippy --all-targets --all-features -- -D warnings
 
       - name: Build
-        run: cargo build --verbose
+        run: cargo build --verbose --all-features
 
       - name: Run Tests
-        run: cargo test --verbose
+        run: cargo test --verbose --all-features
+
+      - name: Generate Documentation
+        run: cargo doc --no-deps --all-features
 
       - name: Generate Barcode
         run: cargo run
@@ -79,4 +89,39 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: barcode-${{ matrix.toolchain }}
-          path: aamva_barcode.png
+          path: |
+            barcode_transparent.png
+            barcode_white.png
+          if-no-files-found: error
+
+      - name: Upload Documentation
+        uses: actions/upload-artifact@v3
+        with:
+          name: documentation-${{ matrix.toolchain }}
+          path: target/doc
+          if-no-files-found: warn
+
+  release:
+    name: Create Release
+    needs: build_and_test
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: barcode-stable
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            barcode_transparent.png
+            barcode_white.png
+          draft: false
+          prerelease: false
+          generate_release_notes: true

@@ -1,16 +1,14 @@
-mod preprocess;
 mod decode;
 mod generate_barcode;
+mod preprocess;
 mod structure;
 use structure::data::DriversLicense;
 
 use crate::generate_barcode::{transparant_background, white_background};
 use rxing::{
-    BarcodeFormat, EncodeHintType, EncodeHintValue, EncodingHintDictionary,
-    MultiFormatWriter,
+    BarcodeFormat, EncodeHintType, EncodeHintValue, EncodingHintDictionary, MultiFormatWriter,
     Writer,
 };
-
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let license = DriversLicense {
@@ -23,8 +21,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         height: String::from("071 IN"),
         eye_color: String::from("HAZ"),
         hair_color: "BRO".to_string(),
-        dob: String::from("12011989"), // MMDDYYYY
-        issue_date: String::from("06072022"), // MMDDYYYY
+        dob: String::from("12011989"),         // MMDDYYYY
+        issue_date: String::from("06072022"),  // MMDDYYYY
         expiry_date: String::from("12012027"), // MMDDYYYY
         postal_code: String::from("945444132  "),
         alternative_hair_color_encoding: String::from("BRN"),
@@ -45,12 +43,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let decoded_result = license.to_aamva_string();
     println!("Original barcode content: {}", decoded_result);
 
-
     let writer = MultiFormatWriter;
     let mut encode_hints = EncodingHintDictionary::new();
     encode_hints.insert(
         EncodeHintType::MARGIN,
-        EncodeHintValue::Margin("1".to_string())
+        EncodeHintValue::Margin("1".to_string()),
     );
 
     let bit_matrix = writer.encode_with_hints(
@@ -58,7 +55,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         &BarcodeFormat::PDF_417,
         1230, // Changed from 300 to 1230
         323,  // Changed from 150 to 323
-        &encode_hints
+        &encode_hints,
     )?;
 
     let width = bit_matrix.width();
