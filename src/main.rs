@@ -21,14 +21,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         city: String::from("Hayward").to_uppercase(),
         state: String::from("CA").to_uppercase(),
         height: String::from("071 IN"),
-        eye_color: String::from("BRO"),
+        eye_color: String::from("HAZ"),
         hair_color: "BRO".to_string(),
         dob: String::from("12011989"), // MMDDYYYY
         issue_date: String::from("06072022"), // MMDDYYYY
         expiry_date: String::from("12012027"), // MMDDYYYY
         postal_code: String::from("945444132  "),
         alternative_hair_color_encoding: String::from("BRN"),
-        redundant_encoding_eye_color: String::from("BRN"),
+        redundant_encoding_eye_color: String::from("HZL"),
         weight: "220".to_string(),
         middle_name: "".to_string(),
         organ_donor: "".to_string(),
@@ -38,7 +38,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         middle_name_truncated: "N".to_string(),
         first_name_truncated: "N".to_string(),
         vehicle_class: "C".to_string(),
-        document_discriminator: "06/07/2022508B4/BBFD/27".to_string(), // {Issue_Date}{Sequence}{Office_Code}/{Security_Code}/{Version AKA exp date year not century}
+        document_discriminator: "06/07/2022508B4/BBFD/27".to_string(), // {Issue_Date}{Sequence}{Office_Code}/{Security_Code}/{Version AKA exp date year without century}
         inventory_control_number: "22157D11759070901".to_string(),
     };
 
@@ -56,10 +56,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let bit_matrix = writer.encode_with_hints(
         &decoded_result,
         &BarcodeFormat::PDF_417,
-        300,
-        150,
+        1230, // Changed from 300 to 1230
+        323,  // Changed from 150 to 323
         &encode_hints
     )?;
+
     let width = bit_matrix.width();
     let height = bit_matrix.height();
 
